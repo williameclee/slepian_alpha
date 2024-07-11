@@ -72,7 +72,7 @@ if ~isstr(TH)
 
   if exist(fname,'file')==2 
     load(fname)
-    disp(sprintf('Loading %s',fname))
+    fprintf('Loading %s\n',fname)
   else
     % Initialize matrices
     G=repmat(0,(maxL+1)^2,J);

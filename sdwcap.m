@@ -83,7 +83,7 @@ end
 % Used matzerofix to remediate this.
 if exist(fnpl,'file')==2 && (vcut>0)
   load(fnpl)
-  disp(sprintf('%s loaded by SDWCAP',fnpl))
+  fprintf('%s loaded by SDWCAP\n',fnpl)
 else
   % Get the full Shannon number
   N=ldim*(1-cos(TH/180*pi))/2;

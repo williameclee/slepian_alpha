@@ -169,7 +169,7 @@ for l=0:L
   dr{li}=d{li}(li:end,li:end);
 end
 
-disp(sprintf('%s took %8.4f s',mfilename,etime(clock,t0)))
+fprintf('%s took %8.4f s\n',mfilename,etime(clock,t0))
 
 % Optional output
 varns={dr,d};

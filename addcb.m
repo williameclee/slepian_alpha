@@ -32,7 +32,7 @@ function varargout=addcb(pos,caxcon,caxoc,parm,tint,invt)
 % CAVEAT:
 %
 % When in doubt, specify the colorbar by name string
-% 
+%
 % SEE ALSO:
 %
 % PLOTTOPO, PLOTGRAV, JOINCOLMAP, CAX2DEM, SERGEICOL, DEMMAP, IMAGEFDIR, CBARTICKS
@@ -77,20 +77,20 @@ defval('tint',(maC-miC)/10)
 % Some flag to control 'hor' vs 'ver'
 wis=2;
 if length(parm)==1 && parm==1
-  % Not quite right if it turns out to be vertical 
+  % Not quite right if it turns out to be vertical
   % New length addition to skip for BW
   plottopo(cbd,[],caxcon,caxoc,[0 1],[1 0])
 elseif length(parm)==1 && parm==2
   % New length addition to skip for BW
   plotgrav(cbd,-sign(cbd),0,caxcon,caxoc)
 elseif [~isstr(parm) && strcmp(poso,'hor')] || ...
-      [~isstr(parm) && poso(3)>poso(4)]
+    [~isstr(parm) && poso(3)>poso(4)]
   % New if for BW color bars called by gray(N)
   h=parm; if invt==1; h=flipud(h); end
   h=reshape(h,[1 size(h,1) size(h,2)]);
   imagefdir([miC 1],[maC 0],h);
 elseif [~isstr(parm) && strcmp(poso,'vert')]  || ...
-      [~isstr(parm) && poso(4)>poso(3)]
+    [~isstr(parm) && poso(4)>poso(3)]
   % New if for BW color bars called by gray(N)
   h=parm; if invt==0; h=flipud(h); end
   h=reshape(h,[1 size(h,1) size(h,2)]);
@@ -118,25 +118,25 @@ longticks(cb)
 
 if [~isstr(parm) && strcmp(poso,'hor')]
   % New if for BW
-  xtcb=get(cb,'XTick'); 
+  xtcb=get(cb,'XTick');
   xlcb=get(cb,'XTicklabel');
   set(cb,'XTick',xtcb(1:2:end))
   set(cb,'XTicklabel',cellstr(xlcb(1:2:end,:)))
 elseif [~isstr(parm) && strcmp(poso,'hor')]
   % New if for BW
-  ytcb=get(cb,'YTick'); 
+  ytcb=get(cb,'YTick');
   ylcb=get(cb,'YTicklabel');
   set(cb,'YTick',ytcb(1:2:end))
   set(cb,'YTicklabel',cellstr(ylcb(1:2:end,:)))
 elseif [length(parm)==1 && parm==1] || [length(parm)==1 && parm==2] || ...
-	([isstr(parm) && strcmp(poso,'hor')] || poso(3)>poso(4))
+    ([isstr(parm) && strcmp(poso,'hor')] || poso(3)>poso(4))
   % New length addition to skip for BW
-  xtcb=get(cb,'XTick'); 
+  xtcb=get(cb,'XTick');
   xlcb=get(cb,'XTickLabel');
   set(cb,'XTick',xtcb(1:2:end))
   set(cb,'XTickLabel',cellstr(xlcb(1:2:end,:)))
 elseif [isstr(parm) & strcmp(poso,'vert') || poso(4)>poso(3)]
-  ytcb=get(cb,'YTick'); 
+  ytcb=get(cb,'YTick');
   ylcb=get(cb,'YTickLabel');
   set(cb,'YTick',ytcb(1:2:end))
   set(cb,'YTickLabel',cellstr(ylcb(1:2:end,:)))
@@ -150,10 +150,10 @@ elseif [~isstr(parm) && strcmp(poso,'hor')]
 elseif [~isstr(parm) && strcmp(poso,'vert')]
   xcb=ylabel('add x-label here');
 elseif [isstr(parm) && strcmp(poso,'vert')] ...
-      || [~isstr(poso) && poso(4)>poso(3)]
+    || [~isstr(poso) && poso(4)>poso(3)]
   xcb=ylabel('add y-label here');
 elseif [isstr(parm) & strcmp(poso,'hor')] ...
-      || [~isstr(poso) && poso(3)>poso(4)]
+    || [~isstr(poso) && poso(3)>poso(4)]
   xcb=xlabel('add x-label here');
 else
   error('Specify valid options')

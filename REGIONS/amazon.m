@@ -30,7 +30,7 @@ xunt=[];
 XY=load(fullfile(getenv('IFILES'),'COASTS',regn));
 
 % Modify and resave it
-XY=regselect(regn,XY(:,1),XY(:,2),xunt,res,buf);
+XY=regselect(regn,XY.XY(:,1),XY.XY(:,2),xunt,res,buf);
 
 if nargout==0
   plot(XY(:,1),XY(:,2),'k-'); axis image; grid on
