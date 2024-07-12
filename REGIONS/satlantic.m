@@ -24,7 +24,7 @@ function varargout = satlantic(varargin)
     warning('off', 'MATLAB:polyshape:repairedBySimplify');
     % Parse the inputs
     [upscale, inclang, buf, moreBuf, forceReload, lonOrigin] = ...
-        parsecoastinputs(varargin, 'DefaultInclang', 60);
+        parsecoastinputs(varargin, 'DefaultInclang', 90);
     oceanTitle = 'South Atlantic Ocean';
     oceanParts = 'South Atlantic Ocean';
 

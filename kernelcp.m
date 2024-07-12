@@ -73,6 +73,7 @@ function varargout = kernelcp(Lmax, dom, pars, ngl, rotb)
     defval('ngl', 200)
     defval('rotb', 0)
     defval('K1', NaN)
+    defval('pars', [])
 
     if ischar(Lmax)
         rundemo(Lmax)
@@ -89,13 +90,15 @@ function varargout = kernelcp(Lmax, dom, pars, ngl, rotb)
                 % If the domain is a square patch
             case 'sqpatch'
                 defval('pars', [30 90 10 90] * pi / 180);
-                filname = sprintf('%s-%i-%i-%i-%i-%i.mat', dom, Lmax, ...
+                filname = sprintf('%s-%i-%i-%i-%i-%i.mat', ...
+                    dom, Lmax, ...
                     round(pars(1) * 180 / pi), round(pars(2) * 180 / pi), ...
                     round(pars(3) * 180 / pi), round(pars(4) * 180 / pi));
                 % If the domain is a spherical patch
             case 'patch'
                 defval('pars', [90 75 30] * pi / 180);
-                filname = sprintf('%s-%i-%i-%i-%i.mat', dom, Lmax, ...
+                filname = sprintf('%s-%i-%i-%i-%i.mat', ...
+                    dom, Lmax, ...
                     round(pars(1) * 180 / pi), round(pars(2) * 180 / pi), ...
                     round(pars(3) * 180 / pi));
                 % If the domain is a named region or a closed contour
@@ -144,7 +147,9 @@ function varargout = kernelcp(Lmax, dom, pars, ngl, rotb)
 
         if strcmp(dom, 'patch')
             % For future reference
-            th0 = pars(1); ph0 = pars(2); thR = pars(3);
+            th0 = pars(1);
+            ph0 = pars(2);
+            thR = pars(3);
 
             if th0 == 0
                 disp('Really, should be putting in the GRUNBAUM call here')
@@ -196,7 +201,7 @@ function varargout = kernelcp(Lmax, dom, pars, ngl, rotb)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Introduce and dimensionalize variables and arrays
         [dems, ~, mz, ~, ~, mzo, bigm, bigl] = addmon(Lmax);
-        dimK = (Lmax + 1) ^ 2; 
+        dimK = (Lmax + 1) ^ 2;
         lenm = length(dems);
         Klmlmp = NaN(dimK, dimK);
 
@@ -331,8 +336,8 @@ function varargout = kernelcp(Lmax, dom, pars, ngl, rotb)
             % Need a vector of length "index" that points to the right
             % combination in XlmXlmp for the next array we are
             % designing. First, find the positions we've been missing
-            h = (dimK:-1:1)'; 
-            k = find(dems); 
+            h = (dimK:-1:1)';
+            k = find(dems);
             kk = k + (1:length(k))';
             % Where to insert other elements
             inpo = (indeks(cumsum(skip(h, kk)), k) + 1)';
