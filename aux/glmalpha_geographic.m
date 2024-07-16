@@ -1,5 +1,5 @@
 %% GLMALPHA_GEOGRAPHIC
-% Is an auxiliary function separated from GLMALPHA. 
+% Is an auxiliary function separated from GLMALPHA.
 % It finds G, V, and N for the given region.
 %
 % Authored by:
@@ -8,7 +8,7 @@
 function [G, V, N] = ...
         glmalpha_geographic(maxL, TH, sord, anti, rotb, ...
         ldim, bp, lp, EL, EM, xver, ...
-        beQuiet, mesg)
+        beQuiet, forceNew, mesg)
     % Calculates the localization kernel for this domain
     % See if we can run this calculation in parallel
     canRunParallel = license('test', 'distrib_computing_toolbox') && (verLessThan('matlab', '8.2') && parpool('processes').NumWorkers > 0 ...
@@ -17,10 +17,10 @@ function [G, V, N] = ...
     if canRunParallel
 
         if ~beQuiet
-            disp('Running KERNELCP (parallel)');
+            fprintf('%s calling KERNELCP (parallel)', upper(mfilename));
         end
 
-        Klmlmp = kernelcp_new(maxL, TH, sord);
+        Klmlmp = kernelcp_new(maxL, TH, sord, "ForceNew", forceNew);
     else
 
         if ~beQuiet

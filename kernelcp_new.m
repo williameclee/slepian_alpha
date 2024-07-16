@@ -1,14 +1,15 @@
 %% KERNELCP
-% [Klmlmp,XY,K1,K]=KERNELCP(Lmax,dom,pars,ngl,rotb)
-%
 % Parallel version of KERNELC.
+%
+% Syntax
+%   [Klmlmp, XY, K1, K] = KERNELCP(Lmax, dom, pars, ngl, rotb)
+%
 % Calculation of the localization matrix for some domain on the sphere.
 % NOT FOR POLAR PATCHES! AND NOT GOOD FOR NEAR-POLAR PATCHES! (See GRUNBAUM)
 % NOT WITHOUT MODIFICATIONS FOR REGIONS CONTAINING THE NORTH POLE OR THE
 % SOUTH POLE! (For that, see GLMALPHA). Unit normalization as in YLM.
 %
-% INPUT:
-%
+% Inputs
 % Lmax       Maximum angular degree (bandwidth)
 % dom        'patch'   spherical patch [default], with specs in 'pars'
 %                      NOTE: better use GRUNBAUM / PLM2ROT in this case
@@ -33,8 +34,7 @@
 %            sure that the kernel matrix reflects this. If not, you have
 %            to apply counterrotation after diagonalizing in LOCALIZATION.
 %
-% OUTPUT:
-%
+% Outputs
 % Klmlmp     The localization kernel whose eigenfunctions we want,
 %            indexed as: degree  [0  1  1  1  2  2  2  2  2]
 %                        order   [0  0 -1  1  0 -1  1 -2  2]
@@ -45,27 +45,30 @@
 % K1         An intermediate result useful when rotb=1, see KLMLMP2ROT
 % K          An verification result useful when rotb=1, see KLMLMP2ROT
 %
-% EXAMPLE:
+% Examples
+%   L=19;
+%   [Klmlmp, XY] = kernelcp(L, 'australia');
+%   Klmlmp2 = kernelcp(L, 'australia', [], 'alternative');
+%   and then DIFER, EIG, PLOTSLEP, etc, to evaluate the difference
 %
-% L=19;
-% [Klmlmp,XY]=kernelc(L,'australia');
-% Klmlmp2=kernelc(L,'australia',[],'alternative');
-% and then DIFER, EIG, PLOTSLEP, etc, to evaluate the difference
+%   kernelcp('demo1') % For an illustration of the Antarctica matrix
+%   kernelcp('demo2') % For an illustration of the Antarctica functions
+%   kernelcp('demo3') % For a show of Australia
+%   kernelcp('demo4') % For a demonstration of the rotation of the kernel
+%   kernelcp('demo5') % For a demonstration of kernelcp
 %
-% kernelc('demo1') % For an illustration of the Antarctica matrix
-% kernelc('demo2') % For an illustration of the Antarctica functions
-% kernelc('demo3') % For a show of Australia
-% kernelc('demo4') % For a demonstration of the rotation of the kernel
-% kernelc('demo5') % For a demonstration of kernelcp
+% See also
+%   LOCALIZATION, SDWREGIONS, GLMALPHA, DLMLMP, KERNELC2D,
+%   PLOTSLEP, PLM2AVG, KERNELC, LEGENDREPRODINT, DLMLMP
 %
-% See also LOCALIZATION, SDWREGIONS, GLMALPHA, DLMLMP, KERNELC2D,
-%          PLOTSLEP, PLM2AVG, KERNELC, LEGENDREPRODINT, DLMLMP
-%
-% Last modified by charig-at-princeton.edu, 09/23/2016
-% Last modified by plattner-at-alumni.ethz.ch, 05/26/2017
-% Last modified by fjsimons-at-alum.mit.edu, 11/11/2023
+% Last modified by
+%   charig-at-princeton.edu, 09/23/2016
+%   plattner-at-alumni.ethz.ch, 05/26/2017
+%   fjsimons-at-alum.mit.edu, 11/11/2023
 
 function varargout = kernelcp_new(varargin)
+    % Add path to the auxiliary functions
+    addpath(fullfile(fileparts(mfilename('fullpath')), 'aux'));
     % Parse inputs
     [Lmax, dom, pars, ngl, rotb, forceNew, saveData, beQuiet] = parseinputs(varargin);
     K1 = nan; %#ok<NASGU>
@@ -172,20 +175,31 @@ function varargout = kernelcp_new(varargin)
 
         else
 
-            if iscell(dom)
-                buf = dom{2};
-                dom = dom{1};
-            else
-                buf = 0;
-            end
+            if iscell(dom) && length(dom) >= 3
 
-            defval('pars', 0);
+                if mod(length(dom), 2) == 0
+                    dom = {dom{1}, [], dom{2:end}};
+                end
 
-            if iscell(pars)
-                pars = pars(~cellfun('isempty', pars));
-                XY = feval(dom, "Buffer", buf, pars{:});
+                XY = feval(dom{:});
             else
-                XY = feval(dom, pars, "Buffer", buf);
+
+                if iscell(dom)
+                    buf = dom{2};
+                    dom = dom{1};
+                else
+                    buf = 0;
+                end
+
+                defval('pars', 0);
+
+                if iscell(pars)
+                    pars = pars(~cellfun('isempty', pars));
+                    XY = feval(dom, "Buffer", buf, pars{:});
+                else
+                    XY = feval(dom, pars, "Buffer", buf);
+                end
+
             end
 
         end
@@ -285,8 +299,8 @@ function varargout = kernelcp_new(varargin)
         nGL = max(ngl, 2 * Lmax);
         % These are going to be the required colatitudes - forget XY
         [w, x, N] = gausslegendrecof(nGL, [], intv);
-        save('gausslegendrecof.mat', 'w', 'x', 'N')
-        fprintf('%i Gauss-Legendre points and weights calculated\n', N)
+        save(fullfile(getenv('IFILES'), 'gausslegendrecof.mat'), 'w', 'x', 'N')
+        % fprintf('%s calculated %i Gauss-Legendre points and weights\n', upper(mfilename), N)
 
         % First calculate the Legendre functions themselves
         % Note that dimK==sum(dubs)
@@ -488,6 +502,7 @@ function varargout = kernelcp_new(varargin)
         [lonc, latc, K1, K] = deal(0);
     end
 
+    %% Saving and returning requested variables
     % This is only saved when it's not the alternative calculation method
     if ~strcmp(outputPath1, 'neveravailable') && saveData
 
@@ -511,7 +526,6 @@ function varargout = kernelcp_new(varargin)
 
     end
 
-    %% Returning requested variables
     varargout = {Klmlmp, XY, K1, K};
 end
 
@@ -541,12 +555,7 @@ function varargout = parseinputs(vArargin)
     addParameter(p, 'BeQuiet', false, ...
         @(x) islogical(x));
 
-    try
-        parse(p, vArargin{:});
-    catch
-        disp(p.Results)
-        error('Error parsing inputs')
-    end
+    parse(p, vArargin{:});
 
     Lmax = conddefval(p.Results.Lmax, LmaxDefault);
     dom = conddefval(p.Results.Domain, DomainDefault);
@@ -596,23 +605,30 @@ function varargout = getoutputfile(Lmax, dom, pars, rotb)
                 round(rad2deg(pars(3))));
         case 'geographic'
 
-            if iscell(dom)
-                buf = dom{2};
+            if iscell(dom) && length(dom) >= 3
+                regionString = [dom{1}, dataattrchar("Buffer", dom{3:end})];
                 dom = dom{1};
-            end
-
-            buf = conddefval(buf, 0);
-
-            if iscell(pars)
-                pars = pars(~cellfun('isempty', pars));
-            end
-
-            if isempty(pars)
-                regionString = [dom, dataattrchar('Buffer', buf)];
-            elseif isnumeric(pars)
-                regionString = [dom, dataattrchar('Buffer', buf, pars)];
             else
-                regionString = [dom, dataattrchar('Buffer', buf, pars{:})];
+
+                if iscell(dom)
+                    buf = dom{2};
+                    dom = dom{1};
+                end
+
+                buf = conddefval(buf, 0);
+
+                if iscell(pars)
+                    pars = pars(~cellfun('isempty', pars));
+                end
+
+                if isempty(pars)
+                    regionString = [dom, dataattrchar('Buffer', buf)];
+                elseif isnumeric(pars)
+                    regionString = [dom, dataattrchar('Buffer', buf, pars)];
+                else
+                    regionString = [dom, dataattrchar('Buffer', buf, pars{:})];
+                end
+
             end
 
             if (strcmp(dom, 'antarctica') || strcmp(dom, 'contshelves')) && rotb == 1

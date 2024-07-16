@@ -46,10 +46,6 @@ function varargout = phicurve(collon, th)
 
     %% Main function
     % For every th, find the relevant phint
-    % This is a terrible method, but by adding a very small number to the colatitude,
-    % we can avoid the case where the colatitude of a coordinate is the exact same as the crossing
-    % This issue seems to only arises when th is somewhat regular
-    % distFromTh = collon(:, 1) + (1e-14) - th(:)';
     distFromTh = collon(:, 1) - th(:)';
     hasCrossing = diff(sign(distFromTh));
     hasCrossing(isnan(hasCrossing)) = 0;
@@ -57,12 +53,13 @@ function varargout = phicurve(collon, th)
     if sum((hasCrossing(:) == 0) - 1) == 0
         error('Specify at least one colatitude within the data range')
     elseif sum(hasCrossing(:)) ~= 0
-        distFromTh = collon(:, 1) + (any(collon(:, 1) == th(:)', 2) * 1e-14) - th(:)';
+        distFromTh = collon(:, 1) + ...
+            (collon(:, 1) == th(:)' * 1e-13) - th(:)';
         hasCrossing = diff(sign(distFromTh));
         hasCrossing(isnan(hasCrossing)) = 0;
 
         if sum(hasCrossing(:)) ~= 0
-            error(sprintf('Cannot find pairs of crossings'))
+            error('Cannot find pairs of crossings')
         end
 
     end
@@ -82,7 +79,7 @@ function varargout = phicurve(collon, th)
 
     % The better logic: summation should be zero
     if mod(nCrossing, 2)
-        error(sprintf('Cannot find pairs of crossings'))
+        error('Cannot find pairs of crossings')
     end
 
     % Then one point was exactly hit, this is the thN or thS case

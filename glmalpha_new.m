@@ -81,6 +81,7 @@
 function varargout = glmalpha_new(varargin)
     % Add path to the auxiliary functions
     addpath(fullfile(fileparts(mfilename('fullpath')), 'aux'));
+    addpath(fullfile(fileparts(mfilename('fullpath')), 'demos'));
 
     % Parse inputs
     [TH, L, sord, blox, upco, resc, J, rotb, anti, dom, ...
@@ -163,7 +164,7 @@ function varargout = glmalpha_new(varargin)
         [G, V, N] = ...
             glmalpha_geographic(maxL, TH, sord, anti, rotb, ...
             ldim, bp, lp, EL, EM, xver, ...
-            beQuiet, mesg);
+            beQuiet, forceNew, mesg);
 
         G = G(:, 1:J);
         V = V(1:J);
@@ -177,8 +178,8 @@ function varargout = glmalpha_new(varargin)
     else
         % For AXISYMMETRIC REGIONS
         [G, V, EL, EM, N, GM2AL, MTAP, IMTAP] = ...
-        glmalpha_axisymmetric(TH, sord, L, lp, bp, EM, EL, blkm, ...
-        blox, upco, xver);
+            glmalpha_axisymmetric(TH, sord, L, lp, bp, EM, EL, blkm, ...
+            blox, upco, xver);
 
         if ~strcmp(outputPath, 'neveravailable') && saveData
             % Save the results if it isn't a geographical region
@@ -302,19 +303,26 @@ function [outputPath, outputFileExists, GM2AL, MTAP, IMTAP, xver, dom] = ...
             defval('buf', 0)
             defval('J', ldim)
 
-            if iscell(TH) && length(TH) == 2
+            if iscell(TH) && length(TH) >= 3
+                regionString = [TH{1}, dataattrchar("Buffer", TH{3:end})];
                 dom = TH{1};
-                buf = TH{2};
             else
-                dom = TH;
-                buf = 0;
-            end
 
-            if iscell(sord)
-                sord = sord(~cellfun('isempty', sord));
-                regionString = [dom, dataattrchar('Buffer', buf, sord{:})];
-            else
-                regionString = [dom, dataattrchar('Buffer', buf, 'Upscale', sord)];
+                if iscell(TH) && length(TH) == 2
+                    dom = TH{1};
+                    buf = TH{2};
+                else
+                    dom = TH;
+                    buf = 0;
+                end
+
+                if iscell(sord)
+                    sord = sord(~cellfun('isempty', sord));
+                    regionString = [dom, dataattrchar('Buffer', buf, sord{:})];
+                else
+                    regionString = [dom, dataattrchar('Buffer', buf, 'Upscale', sord)];
+                end
+
             end
 
             % end

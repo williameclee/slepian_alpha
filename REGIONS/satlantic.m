@@ -23,7 +23,7 @@ function varargout = satlantic(varargin)
     % Suppress warnings
     warning('off', 'MATLAB:polyshape:repairedBySimplify');
     % Parse the inputs
-    [upscale, inclang, buf, moreBuf, forceReload, lonOrigin] = ...
+    [upscale, inclang, buf, moreBuf, forceNew, lonOrigin] = ...
         parsecoastinputs(varargin, 'DefaultInclang', 90);
     oceanTitle = 'South Atlantic Ocean';
     oceanParts = 'South Atlantic Ocean';
@@ -33,7 +33,7 @@ function varargout = satlantic(varargin)
         'Upscale', upscale, 'Inclang', inclang, ...
         'Buffer', buf, 'MoreBuffer', moreBuf);
 
-    if dataFileExists && ~forceReload
+    if dataFileExists && ~forceNew
         load(dataFile, 'XY')
 
         varargout = returncoastoutput(nargout, XY, oceanTitle);
@@ -45,6 +45,10 @@ function varargout = satlantic(varargin)
     [oceanPoly, oceanLatlim, oceanLonlim] = ...
         findoceanboundary(oceanParts, inclang, lonOrigin);
 
+    oceanLatlim = oceanLatlim + [-1, 1];
+    oceanLatlim = min(max(oceanLatlim, -90), 90);
+    oceanLonlim = oceanLonlim + [-1, 1];
+
     [~, coastPoly] = gshhscoastline('l', 'Buffer', buf, ...
         'LatLim', oceanLatlim, 'LonLim', oceanLonlim, ...
         'LongitudeOrigin', lonOrigin);
@@ -55,6 +59,8 @@ function varargout = satlantic(varargin)
     coastPoly = manualadjustment(coastPoly, buf, lonOrigin);
 
     oceanPoly = subtract(oceanPoly, coastPoly);
+    oceanPoly = subtract(oceanPoly, intersect(oceanPoly, coastPoly));
+    oceanPoly = subtract(oceanPoly, intersect(oceanPoly, coastPoly));
 
     XY = closecoastline(oceanPoly.Vertices);
 
@@ -82,10 +88,15 @@ function coastPoly = manualadjustment(coastPoly, buf, lonOrigin)
             'Latlim', [-2, -1], 'Lonlim', [-49, -48], ...
             'LongitudeOrigin', lonOrigin);
     end
-
-    if buf >= 5
+    if buf >= 0.5
         coastPoly = addlandregion(coastPoly, ...
-            'Latlim', [-61, -59], 'Lonlim', [-68, -66], ...
+            'Latlim', [-42, -41], 'Lonlim', [-65, -64], ...
+            'LongitudeOrigin', lonOrigin);
+    end
+
+    if buf >= 4.5
+        coastPoly = addlandregion(coastPoly, ...
+            'Latlim', [-61, -58], 'Lonlim', [-68, -61], ...
             'LongitudeOrigin', lonOrigin);
     end
 
