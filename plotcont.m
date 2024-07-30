@@ -73,7 +73,7 @@ function varargout = plotcont(c11, cmn, res, lonofs, pcol, lolax)
     end
 
     %% Loading data sets
-    figure
+    figure(10)
 
     % Where are the data kept? Create a directory $IFILES/COASTS
     % with $IFILES set as an environment variable...

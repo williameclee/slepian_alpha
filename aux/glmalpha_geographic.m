@@ -17,7 +17,7 @@ function [G, V, N] = ...
     if canRunParallel
 
         if ~beQuiet
-            fprintf('%s calling KERNELCP (parallel)', upper(mfilename));
+            fprintf('%s calling KERNELCP (parallel)\n', upper(mfilename));
         end
 
         Klmlmp = kernelcp_new(maxL, TH, sord, "ForceNew", forceNew);

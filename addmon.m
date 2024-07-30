@@ -1,4 +1,3 @@
-function [dems,dels,mz,lmcosi,mzi,mzo,bigm,bigl,rinm,ronm,demin]=addmon(L,m)
 % [dems,dels,mz,lmcosi,mzi,mzo,bigm,bigl,rinm,ronm,demin]=ADDMON(L,m)
 %
 % Returns spherical harmonic degree and positive-order indexing arrays.
@@ -10,7 +9,7 @@ function [dems,dels,mz,lmcosi,mzi,mzo,bigm,bigl,rinm,ronm,demin]=addmon(L,m)
 %
 % OUTPUT:
 %
-% dems      Vector of orders  m involved in the expansion, [0 01 012] 
+% dems      Vector of orders  m involved in the expansion, [0 01 012]
 % dels      Vector of degrees l involved in the expansion, [0 11 222]
 % mz        Index to the m=0 locations for the zonal coefficients
 % lmcosi    Matrix with zeroes where cos/sine coefficients will go
@@ -35,73 +34,94 @@ function [dems,dels,mz,lmcosi,mzi,mzo,bigm,bigl,rinm,ronm,demin]=addmon(L,m)
 %
 % [M,L,mz,BM]=addmout(10); [a,b,c,d,e,f,M2,L2,rinm]=addmon(10);
 % difer(M-M2(rinm))
-% difer(L-L2(rinm)) 
+% difer(L-L2(rinm))
 % difer(M(BM)-M2(rinm(BM)))
 % difer(L(BM)-L2(rinm(BM)))
 %
-% EXAMPLE: 
+% EXAMPLE:
 %
 % Find the positions of the order m in an lmcosi matrix up to degree L
 %
-% L=15; m=round(rand*L); 
+% L=15; m=round(rand*L);
 % [dems,dels,mz,lmcosi,mzi,mzo,bigm,bigl,rinm,ronm,demin]=addmon(L,m);
 % dems(demin)
 %
 % Last modified by fjsimons-at-alum.mit.edu, 5/11/2021
 
-defval('m',NaN)
+function [dems, dels, mz, lmcosi, mzi, mzo, bigm, bigl, rinm, ronm, demin] = addmon(L, m)
 
-matr=(repmat(0:L,2,1)'*diag([0 1]))';
-dems=matranges(matr(:)')';
-els=0:L;
-dels=gamini(els,els+1)';
+    defval('m', NaN)
 
-if nargout>=3
-  mz=[1 cumsum(els(1:end-1)+1)+1]';
-  if nargout>=4
-    lmcosi=[dels dems zeros(length(dels),2)];
-    if nargout>=5
-      mzi=(mz*2+1)-[1:length(mz)]';
-      if nargout>=6
-	% Just number the [dels dems] vector sequentially down the rows
-	indo=reshape(1:length(dems)*2,length(dems),2);
-	% And stick a zero in where the sine coefficient goes
-	indo(length(dels)+mz)=0; indo=indo'; 
-	% Simply pick the nonzero elements on this index array
-	mzo=indo(~~indo);
-	if L>1
-	  % Note that this never skips more than two positions
-	  difer(unique(diff(sort(mzo)))-[1 2 3]',[],[],NaN)
-	end
-	if nargout>=7
-	  fm=[-dems dems]; 
-	  bigm=fm(mzo);
-	  if nargout>=8
-	    fl=[dels dels];
-	    bigl=fl(mzo);
-	    if nargout>=9
-	      if  L>=2
-		% Must do the first couple of degrees myself since gamini(x,0) is bad
-		lopos=cumsum(2*els(1:end-1)+1)+1; 
-		ka=[repmat(1,1,L-1) ; els(3:end)-1 ; repmat(1,1,L-1); els(3:end)];
-		ko=[[1 0 -1 2] gamini(repmat([0 -2 -1 2],1,L-1),ka(:)')]';
-		ko(lopos)=[2:2:2*L];
-		rinm=cumsum(ko);  
-	      elseif L==0
-		rinm=1;
-	      elseif L==1
-		rinm=[1 3 2 4]';
-	      end
-	      if nargout>=10
-		ronm=mzo(rinm);
-		if nargout>=11
-		  demin=addmup(m-1:L-1)+m+1;
-		end
-	      end
-	    end
-	  end
-	end
-      end
+    matr = (repmat(0:L, 2, 1)' * diag([0 1]))';
+    dems = matranges(matr(:)')';
+    els = 0:L;
+    dels = gamini(els, els + 1)';
+
+    if nargout >= 3
+        mz = [1 cumsum(els(1:end - 1) + 1) + 1]';
+
+        if nargout >= 4
+            lmcosi = [dels dems zeros(length(dels), 2)];
+
+            if nargout >= 5
+                mzi = (mz * 2 + 1) - (1:length(mz))';
+
+                if nargout >= 6
+                    % Just number the [dels dems] vector sequentially down the rows
+                    indo = reshape(1:length(dems) * 2, length(dems), 2);
+                    % And stick a zero in where the sine coefficient goes
+                    indo(length(dels) + mz) = 0; indo = indo';
+                    % Simply pick the nonzero elements on this index array
+                    mzo = indo(~ ~indo);
+
+                    if L > 1
+                        % Note that this never skips more than two positions
+                        difer(unique(diff(sort(mzo))) - [1 2 3]', [], [], NaN)
+                    end
+
+                    if nargout >= 7
+                        fm = [-dems dems];
+                        bigm = fm(mzo);
+
+                        if nargout >= 8
+                            fl = [dels dels];
+                            bigl = fl(mzo);
+
+                            if nargout >= 9
+
+                                if L >= 2
+                                    % Must do the first couple of degrees myself since gamini(x,0) is bad
+                                    lopos = cumsum(2 * els(1:end - 1) + 1) + 1;
+                                    ka = [ones(1, L - 1); els(3:end) - 1; ones(1, L - 1); els(3:end)];
+                                    ko = [[1 0 -1 2] gamini(repmat([0 -2 -1 2], 1, L - 1), ka(:)')]';
+                                    ko(lopos) = [2:2:2 * L];
+                                    rinm = cumsum(ko);
+                                elseif L == 0
+                                    rinm = 1;
+                                elseif L == 1
+                                    rinm = [1 3 2 4]';
+                                end
+
+                                if nargout >= 10
+                                    ronm = mzo(rinm);
+
+                                    if nargout >= 11
+                                        demin = addmup(m - 1:L - 1) + m + 1;
+                                    end
+
+                                end
+
+                            end
+
+                        end
+
+                    end
+
+                end
+
+            end
+
+        end
+
     end
-  end
 end

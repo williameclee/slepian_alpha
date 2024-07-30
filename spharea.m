@@ -1,4 +1,3 @@
-function [Ao4p,varargout]=spharea(c11,cmn) 
 % [Ao4p,XY]=SPHAREA(c11,cmn)
 % [Ao4p,XY]=SPHAREA(region)
 % [Ao4p,XY]=SPHAREA(XY)
@@ -32,15 +31,15 @@ function [Ao4p,varargout]=spharea(c11,cmn)
 %      spharea([0 90],[360 -90]) % and the continental coverage
 %      spharea('africa')+spharea('eurasia')+spharea('namerica')+...
 %         spharea('samerica')+spharea('greenland')+spharea('australia')
-% 
+%
 % EXAMPLE 2: area between one degree of longitude for all latitudes -
 % this goes as the cosine of the latitude of course
-% 
+%
 %      latsup=90:-1:-89; latsdwn=89:-1:-90;
 %      lonslft=zeros(size(latsup)); lonsrgt=ones(size(latsup));
 %      c11=[lonslft' latsup']; cmn=[lonsrgt' latsdwn']; subplot(121)
 %      imagesc([0.5 0.5],[90 -90],spharea(c11,cmn)); colormap gray; axis xy
-%      subplot(122); 
+%      subplot(122);
 %      imagesc([0.5 0.5],[90 -90],cos(linspace(-pi/2,pi/2,length(latsup)))');
 %      axis xy
 %
@@ -55,74 +54,93 @@ function [Ao4p,varargout]=spharea(c11,cmn)
 % Last modified by charig-at-princeton.edu, 05/14/2015
 % Last modified by fjsimons-at-alum.mit.edu, 07/21/2014
 
-defval('XY',NaN)
+function [Ao4p, varargout] = spharea(c11, cmn)
 
-if nargin==2 && ~all(cmn(:)==0)
-  if all(size(c11)==size(cmn)) && length(cmn)~=1
-    % Conversion to radians
-    c11=c11*pi/180;
-    cmn=cmn*pi/180;
-    
-    lon1=c11(:,1);
-    lat1=c11(:,2);
-    lon2=cmn(:,1);
-    lat2=cmn(:,2);
-  
-    Ao4p=abs(lon1-lon2).*abs(sin(lat1)-sin(lat2))/4/pi;
-  elseif length(cmn)==1 
-    % This means that the variable SORD is specified
-    TH=c11;
-    sord=cmn;
-    switch sord
-     case 1
-      % Area of the single cap of width TH
-      Ao4p=(1-cos(TH*pi/180))/2;
-     case 2
-      % Area of the double cap each of width 90-TH
-      Ao4p=(1-sin(TH*pi/180));
-     case 3
-      % Area of the belt of width 2TH
-      Ao4p=sin(TH*pi/180);
-    end    
-  end
-else
-  defval('ngl',200)
-  if isstr(c11)
-    % Specify the region by name
-    defval('N',10);
-    region=c11;
-    eval(sprintf('XY=%s(%i);',region,N));
-  elseif iscell(c11)
-    % Specify the region by name
-    defval('N',10);
-    region=c11{1};
-    eval(sprintf('XY=%s(%i,%f);',region,N,c11{2}));
-    % Do this so dphregion below is correct for these coordinates
-    region=XY; N=NaN;
-  else
-    % Specify the region by the coordinates of the bounding curve
-    XY=c11;
-    region=XY;
-    N=NaN;
-  end
+    defval('XY', NaN)
 
-  % Calculate northernmost and southernmost colatitude
-  thN=90-max(XY(:,2)); thN=thN*pi/180;
-  thS=90-min(XY(:,2)); thS=thS*pi/180;
-  % Calculate Gauss-Legendre points
-  intv=cos([thS thN]);
-  % Make this number high
-  nGL=min(ngl,size(XY,1)/2);
-  [w,x,Ngg]=gausslegendrecof(nGL,[],intv);
-  % Now get the longitudinal intersections
-  [phint,thp,php]=dphregion(acos(x)*180/pi,N,region);
-  % plot(thp,php)
-  phint=phint*pi/180;
-  % This is not ridiculous as I may be giving it multiple intervals
-  I=coscos(acos(x),0,0,phint);
-  Ao4p=w(:)'*I/4/pi;
+    if nargin == 2 && ~all(cmn(:) == 0)
+
+        if all(size(c11) == size(cmn)) && length(cmn) ~= 1
+            % Conversion to radians
+            c11 = c11 * pi / 180;
+            cmn = cmn * pi / 180;
+
+            lon1 = c11(:, 1);
+            lat1 = c11(:, 2);
+            lon2 = cmn(:, 1);
+            lat2 = cmn(:, 2);
+
+            Ao4p = abs(lon1 - lon2) .* abs(sin(lat1) - sin(lat2)) / 4 / pi;
+        elseif length(cmn) == 1
+            % This means that the variable SORD is specified
+            TH = c11;
+            sord = cmn;
+
+            switch sord
+                case 1
+                    % Area of the single cap of width TH
+                    Ao4p = (1 - cos(TH * pi / 180)) / 2;
+                case 2
+                    % Area of the double cap each of width 90-TH
+                    Ao4p = (1 - sin(TH * pi / 180));
+                case 3
+                    % Area of the belt of width 2TH
+                    Ao4p = sin(TH * pi / 180);
+            end
+
+        end
+
+    else
+        defval('ngl', 200)
+
+        if isstr(c11)
+            % Specify the region by name
+            N = 10;
+            region = c11;
+
+            if isocean(region)
+                XY = feval(region);
+            else
+                XY = feval(region, N);
+            end
+
+        elseif iscell(c11)
+            % Specify the region by name
+            N = 10;
+            region = c11;
+            if length(region) >= 3
+                XY = feval(region{:});
+            else
+                XY = feval(region{1}, N, region{2});
+            end
+            % Do this so dphregion below is correct for these coordinates
+            region = XY;
+            N = NaN;
+        else
+            % Specify the region by the coordinates of the bounding curve
+            XY = c11;
+            region = XY;
+            N = NaN;
+        end
+
+        % Calculate northernmost and southernmost colatitude
+        thN = 90 - max(XY(:, 2)); thN = thN * pi / 180;
+        thS = 90 - min(XY(:, 2)); thS = thS * pi / 180;
+        % Calculate Gauss-Legendre points
+        intv = cos([thS thN]);
+        % Make this number high
+        nGL = min(ngl, size(XY, 1) / 2);
+        [w, x, ~] = gausslegendrecof(nGL, [], intv);
+        % Now get the longitudinal intersections
+        [phint, ~, ~] = dphregion(acos(x) * 180 / pi, N, region);
+        % plot(thp,php)
+        phint = phint * pi / 180;
+        % This is not ridiculous as I may be giving it multiple intervals
+        I = coscos(acos(x), 0, 0, phint);
+        Ao4p = w(:)' * I / 4 / pi;
+    end
+
+    % Provide desired output
+    varns = {XY};
+    varargout = varns(1:nargout - 1);
 end
-
-% Provide desired output
-varns={XY};
-varargout=varns(1:nargout-1);

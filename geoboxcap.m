@@ -1,4 +1,4 @@
-% [Bl,dels,r,lon,lat,lmcosi]=GEOBOXCAP(L,dom,N,degres,act,lonc,latc)
+% [Bl,dels,r,lon,lat,lmcosi]=GEOBOXCAP(L,dom,N,meshSize,act,lonc,latc)
 %
 % Returns the spherical-harmonic POWER SPECTRUM in the UNIT-NORMALIZED
 % spherical-harmonic basis of an all-or-nothing BOXCAR over a particular
@@ -13,7 +13,7 @@
 %            'samerica', 'amazon', 'orinoco', 'gpsnamerica', 'antarctica'
 %            OR: [lon lat] an ordered list defining a closed curve [degrees]
 % N          The splining smoothness of the geographical boundary [default: 10]
-% degres     The resolution of the underlying spatial grid [default: Nyquist]
+% meshSize     The resolution of the underlying spatial grid [default: Nyquist]
 % act        1 Actually perform the calculations [default]
 %            0 Don't, but simply return the (rotated) mask function
 % lonc,latc  Rotate coordinates by this amount
@@ -39,53 +39,97 @@
 function varargout = geoboxcap(varargin)
 
     %% Parsing inputs and initialisation
-    % Assign defaults
-    defval('L', 18);
-    defval('dom', 'australia');
-    defval('N', 10);
-    defval('degres', -1); % replaced later
-    defval('act', 1);
-    defval('lonc', 0);
-    defval('latc', 0);
-    defval('c11cmn', [0, 90, 360, -90]); % default to global
+    c11cmn = [0, 90, 360, -90]; % default to global
 
     % Parse inputs
     p = inputParser;
     addOptional(p, 'L', 18);
-    addOptional(p, 'dom', 'australia', ...
+    addOptional(p, 'Domain', 'australia', ...
         @(x) (ischar(x) || iscell(x)));
-    addOptional(p, 'N', 10);
-    addOptional(p, 'degres', -1);
+    addOptional(p, 'Upscale', 1);
+    addOptional(p, 'MeshSize', -1);
     addOptional(p, 'act', 1);
     addOptional(p, 'lonc', 0);
     addOptional(p, 'latc', 0);
-    addOptional(p, 'Inverse', 'off', ...
-        @(x) ischar(validatestring(x, {'on', 'off'})));
-    addOptional(p, 'ForceReload', 'off', ...
-        @(x) ischar(validatestring(x, {'on', 'off'})));
+    addOptional(p, 'Inverse', false, ...
+        @islogical);
+    addOptional(p, 'ForceNew', false, ...
+        @islogical);
     parse(p, varargin{:});
 
-    defvalin('L', p.Results.L);
-    defvalin('dom', p.Results.dom);
-    defvalin('N', p.Results.N);
-    defvalin('degres', p.Results.degres);
-    defvalin('act', p.Results.act);
-    defvalin('lonc', p.Results.lonc);
-    defvalin('latc', p.Results.latc);
-    isInverted = strcmp(p.Results.Inverse, 'on');
-    forceReload = strcmp(p.Results.ForceReload, 'on');
+    if ~isempty(p.Results.L)
+        L = p.Results.L;
+    else
+        L = 18;
+    end
+
+    if ~isempty(p.Results.Domain)
+        dom = p.Results.Domain;
+    else
+        dom = 'australia';
+    end
+
+    if ~isempty(p.Results.Upscale)
+        upscale = p.Results.Upscale;
+    else
+        upscale = 1;
+    end
+
+    if ~isempty(p.Results.MeshSize)
+        meshSize = p.Results.MeshSize;
+    else
+        meshSize = -1;
+    end
+
+    if ~isempty(p.Results.act)
+        act = p.Results.act;
+    else
+        act = 1;
+    end
+
+    if ~isempty(p.Results.lonc)
+        lonc = p.Results.lonc;
+    else
+        lonc = 0;
+    end
+
+    if ~isempty(p.Results.latc)
+        latc = p.Results.latc;
+    else
+        latc = 0;
+    end
+
+    if ~isempty(p.Results.Inverse)
+        isInverted = p.Results.Inverse;
+    else
+        isInverted = false;
+    end
+
+    if ~isempty(p.Results.ForceNew)
+        forceNew = p.Results.ForceNew;
+    else
+        forceNew = false;
+    end
 
     % Make a grid of ones and zeroes depending on the desired resolution
     degN = 180 / sqrt(L * (L + 1));
 
-    if degres < 0 %#ok<NODEF>
-        degres = degN;
+    if meshSize < 0
+        meshSize = degN;
     end
 
     % Find the coordinates of the region
     if ischar(dom)
         % Run the named function to return the coordinates
-        XY = eval(sprintf('%s(%i)', dom, N));
+        XY = feval(dom, upscale);
+    elseif iscell(dom)
+
+        if isocean(dom{1})
+            XY = feval(dom{:});
+        else
+            XY = feval(dom{1}, dom{3}, dom{5});
+        end
+
     else
         % Get the coordinates as defined from the input in degrees
         XY = dom;
@@ -98,9 +142,9 @@ function varargout = geoboxcap(varargin)
     end
 
     %% Find data file
-    [dataFile, fileExists] = datafilename(L, dom, N, degres, lonc, latc, isInverted);
+    [dataFile, fileExists] = getoutputfile(L, dom, upscale, meshSize, lonc, latc, isInverted);
 
-    if fileExists && ~forceReload
+    if fileExists && ~forceNew
         fprintf('GEOBOXCAP loading %s \n', dataFile)
         load(dataFile, 'Bl', 'dels', 'r', 'lon', 'lat', 'lmcosi')
 
@@ -115,8 +159,8 @@ function varargout = geoboxcap(varargin)
 
     %% Main code
     % The number of longitude and latitude grid points that will be computed
-    nlon = ceil((c11cmn(3) - c11cmn(1)) / degres + 1);
-    nlat = ceil((c11cmn(2) - c11cmn(4)) / degres + 1);
+    nlon = ceil((c11cmn(3) - c11cmn(1)) / meshSize + 1);
+    nlat = ceil((c11cmn(2) - c11cmn(4)) / meshSize + 1);
     % Lon and lat grid vectors in degrees
     lon = linspace(c11cmn(1), c11cmn(3), nlon);
     lat = linspace(c11cmn(2), c11cmn(4), nlat);
@@ -188,6 +232,7 @@ function varargout = geoboxcap(varargin)
 
     %% Save and return requested data
     save(dataFile, 'Bl', 'dels', 'r', 'lon', 'lat', 'lmcosi')
+    fprintf('%s saving %s\n', upper(mfilename), dataFile)
 
     if nargout == 0
 
@@ -203,14 +248,7 @@ function varargout = geoboxcap(varargin)
 
 end
 
-function defvalin(name, value)
-
-    if ~isempty(value)
-        assignin('caller', name, value)
-    end
-
-end
-
+%% Subfunctions
 function plotbox(LON, LAT, XY, XYor, lmcosi)
     figure
     clf
@@ -233,7 +271,7 @@ function plotbox(LON, LAT, XY, XYor, lmcosi)
     hold off
 end
 
-function [dataFile, fileExists] = datafilename(L, dom, N, degres, lonc, latc, isInverted)
+function [dataFile, fileExists] = getoutputfile(L, dom, upscale, meshSize, lonc, latc, isInverted)
     dataFolder = fullfile(getenv('GEOBOXCAP'));
 
     if isempty(dataFolder)
@@ -245,31 +283,47 @@ function [dataFile, fileExists] = datafilename(L, dom, N, degres, lonc, latc, is
         mkdir(dataFolder)
     end
 
-    dataFileAttrXY = cell(1, 5);
+    % dataFileAttrXY = cell(1, 5);
 
     if isInverted
-        dataFileAttrXY{1} = 'I';
+
+        if iscell(dom)
+            dataFileAttrXY = ['I', capitalise(dom{1})];
+        else
+            dataFileAttrXY = ['I', capitalise(dom)];
+        end
+
+    else
+
+        if iscell(dom)
+            dataFileAttrXY = capitalise(dom{1});
+        else
+            dataFileAttrXY = capitalise(dom);
+        end
+
     end
 
     if iscell(dom)
-        dataFileAttrXY{2} = sprintf('%s', capitalise(dom{1}));
-        dataFileAttrXY{4} = sprintf('-%i', dom{2});
-    else
-        dataFileAttrXY{2} = sprintf('%s', capitalise(dom));
+
+        if length(dom) >= 3
+            dataFileAttrXY = [dataFileAttrXY, dataattrchar("Buffer", dom{3:end})];
+        elseif length(dom) >= 2
+            dataFileAttrXY = [dataFileAttrXY, dataattrchar("Buffer", dom{2})];
+        end
+
     end
 
-    dataFileAttrXY{3} = sprintf('-%i', N);
-    dataFileAttrXY{5} = sprintf('-%i', L);
+    dataFileAttrXY = [dataFileAttrXY, '-', num2str(upscale), '-', num2str(L)];
 
     dataFileAttrRes = cell(1, 3);
-    dataFileAttrRes{1} = sprintf('%i', degres);
+    dataFileAttrRes{1} = num2str(meshSize);
 
     if lonc ~= 0 || latc ~= 0
         dataFileAttrRes{2} = sprintf('-%f', lonc);
         dataFileAttrRes{3} = sprintf('-%f', latc);
     end
 
-    dataFile = [dataFileAttrXY{:}, '_', dataFileAttrRes{:}, '.mat'];
+    dataFile = [dataFileAttrXY, '_', dataFileAttrRes{:}, '.mat'];
 
     dataFile = fullfile(dataFolder, dataFile);
     fileExists = exist(dataFile, 'file') == 2;

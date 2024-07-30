@@ -39,7 +39,7 @@ function [upscale, inclang, buf, moreBuf, forceNew, lonOrigin, eqMask] = ...
 
     inclang = p.Results.Inclang;
 
-    if isempty(inclang) || isnan(inclang)
+    if any(isempty(inclang)) || any(isnan(inclang))
         inclang = defaultInclang;
     end
 
