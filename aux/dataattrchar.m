@@ -15,11 +15,21 @@ function dataFileAttr = dataattrchar(varargin)
     eqMask = p.Results.EQMask;
     moreBuf = p.Results.MoreBuffer;
 
+    if length(inclang) == 2
+
+        if inclang(1) == -inclang(2)
+            inclang = max(inclang);
+        end
+
+    end
+
     %% Find the data file
     dataFileAttr = cell(1, 3);
 
-    if ~(upscale == 0 || upscale == 1 || isempty(upscale))
-        dataFileAttr{1} = num2str(upscale);
+    if ~isempty(upscale)
+        if ~(upscale == 0 || upscale == 1)
+            dataFileAttr{1} = num2str(upscale);
+        end
     end
 
     if ~(buf == 0) || ~isempty(moreBuf)
@@ -38,14 +48,14 @@ function dataFileAttr = dataattrchar(varargin)
 
     end
 
-    if isnan(inclang) || isempty(inclang)
+    if any(isnan(inclang)) || any(isempty(inclang))
     elseif isscalar(inclang)
 
-        if ~(inclang == 90 | isempty(inclang))
+        if ~(inclang == 90 || isempty(inclang))
             dataFileAttr{3} = num2str(inclang);
         end
 
-    else
+    elseif ~isequal(inclang, [-90, 90])
         inclangSign = [];
 
         if inclang(1) < 0

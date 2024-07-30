@@ -1,41 +1,52 @@
-function varargout = samerica(res, buf)
-    % XY=SAMERICA(res,buf)
-    % SAMERICA(...) % Only makes a plot
-    %
-    % Finds the coordinates of Samerica, potentially buffered by some amount.
-    %
-    % INPUT:
-    %
-    % res      0 The standard, default values
-    %          N Splined values at N times the resolution
-    % buf      Distance in degrees that the region outline will be enlarged
-    %          by BUFFERM, not necessarily integer, possibly negative
-    %          [default: 0]
-    %
-    % OUTPUT:
-    %
-    % XY       Closed-curved coordinates of the continent
-    %
-    % Last modified by charig-at-princeton.edu, 11/23/2011
-    % Last modified by fjsimons-at-alum.mit.edu, 11/23/2011
+%% SAMERICA
+% Returns the longitude-latitude coordinates of the South America
+% continent, potentially buffered by some amount.
+% Note that the Falkland Islands are simplified but included.
+%
+% Syntax
+%   lonlat = samerica(upscale, buf)
+%   samerica(__)
+%
+% Inputs
+%   upscale - The times of spline-upscaling applied to the coordinates
+%       The default value is 0 (no upscaling)
+%   buf - The size of the buffer from the coastline in degrees
+%       The value can be positive (buffering outwards) or negative
+%       (buffering inwards)
+%       The default value is 0 (no buffer)
+%
+% Outputs
+%   lonlat - Closed-curved coordinates of the continent
+%       The coordinates are in the form of [longitude(:), latitude(:)] in
+%       degrees
+%
+% Last modified by
+%   williameclee-at-arizona.edu, 07/30/2024
+%   fjsimons-at-alum.mit.edu, 11/23/2011
+%   charig-at-princeton.edu, 11/23/2011
 
-    defval('res', 0)
-    defval('buf', 0)
-
+function lonlat = samerica(varargin)
+    % Parse inputs
+    [upscale, buf] = parsedomaininputs(varargin);
     % Parameters that make this the region in question
-    regn = 'samerica';
-    c11 = [278.5 13];
-    cmn = [326 -55.5];
+    domainName = 'samerica';
+    c11 = [278.5, 13];
+    cmn = [326, -55.5];
     xunt = 16:271;
 
-    % Do it! Make it, load it, save it
-    XY = regselect(regn, c11, cmn, xunt, res, buf);
+    % Find/load/save the coordinates
+    lonlat = regselect(domainName, c11, cmn, xunt, upscale, buf);
 
-    if nargout == 0
-        plot(XY(:, 1), XY(:, 2), 'k-'); axis equal; grid on
+    % Plot the result if no output is requested
+    if nargout > 0
+        return
     end
 
-    % Prepare optional output
-    varns = {XY};
-    varargout = varns(1:nargout);
+    figure(10)
+    % Specify a figure number so there won't be a new figure each time
+    set(gcf, 'Name', ...
+        sprintf('Coordinates of Africa (%s)', upper(mfilename)))
+    plot(lonlat(:, 1), lonlat(:, 2), 'k-')
+    axis image
+    grid on
 end

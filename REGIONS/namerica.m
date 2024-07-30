@@ -1,44 +1,52 @@
-function varargout = namerica(res, buf)
-    % XY=NAMERICA(res,buf)
-    % NAMERICA(...) % Only makes a plot
-    %
-    % Finds the coordinates of Namerica, potentially buffered by some amount.
-    %
-    % INPUT:
-    %
-    % res      0 The standard, default values
-    %          N Splined values at N times the resolution
-    % buf      Distance in degrees that the region outline will be enlarged
-    %          by BUFFERM, not necessarily integer, possibly negative
-    %          [default: 0]
-    %
-    % OUTPUT:
-    %
-    % XY       Closed-curved coordinates of the continent
-    %
-    % Last modified by charig-at-princeton.edu, 11/23/2011
-    % Last modified by fjsimons-at-alum.mit.edu, 11/23/2011
+%% NAMERICA
+% Returns the longitude-latitude coordinates of the North America 
+% continent, potentially buffered by some amount.
+%
+% Syntax
+%   lonlat = namerica(upscale, buf)
+%   nnamerica(__)
+%
+% Inputs
+%   upscale - The times of spline-upscaling applied to the coordinates
+%       The default value is 0 (no upscaling)
+%   buf - The size of the buffer from the coastline in degrees
+%       The value can be positive (buffering outwards) or negative
+%       (buffering inwards)
+%       The default value is 0 (no buffer)
+%
+% Outputs
+%   lonlat - Closed-curved coordinates of the continent
+%       The coordinates are in the form of [longitude(:), latitude(:)] in
+%       degrees
+%
+% Last modified by
+%   williameclee-at-arizona.edu, 07/30/2024
+%   fjsimons-at-alum.mit.edu, 11/23/2011
+%   charig-at-princeton.edu, 11/23/2011
 
-    defval('res', 0)
-    defval('buf', 0)
-
+function lonlat = namerica(varargin)
+    % Parse inputs
+    [upscale, buf] = parsedomaininputs(varargin);
     % Parameters that make this the region in question
-    regn = 'namerica';
+    domainName = 'namerica';
     c11 = [191, 74.5];
     cmn = [304.5, 12];
     % xunt = [385:717, 721:1004];
     xunt = [385:717, 722:1004];
 
-    % Do it! Make it, load it, save it
-    XY = regselect(regn, c11, cmn, xunt, res, buf);
+    % Find/load/save the coordinates
+    lonlat = regselect(domainName, c11, cmn, xunt, upscale, buf);
 
-    if nargout == 0
-        plot(XY(:, 1), XY(:, 2), 'k-')
-        axis equal
-        grid on
+    % Plot the result if no output is requested
+    if nargout > 0
+        return
     end
 
-    % Prepare optional output
-    varns = {XY};
-    varargout = varns(1:nargout);
+    figure(10)
+    % Specify a figure number so there won't be a new figure each time
+    set(gcf, 'Name', ...
+        sprintf('Coordinates of North America (%s)', upper(mfilename)))
+    plot(lonlat(:, 1), lonlat(:, 2), 'k-')
+    axis image
+    grid on
 end

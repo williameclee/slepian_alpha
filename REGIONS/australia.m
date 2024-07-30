@@ -1,40 +1,52 @@
-function varargout=australia(res,buf)  
-% XY=AUSTRALIA(res,buf)
-% AUSTRALIA(...) % Only makes a plot
+%% AUSTRALIA
+% Returns the longitude-latitude coordinates of Australia, potentially
+% buffered by some amount.
+% Note that the Tasmania is not included.
 %
-% Finds the coordinates of Australia, potentially buffered by some amount.
+% Syntax
+%   lonlat = australia(upscale, buf)
+%   australia(__)
 %
-% INPUT:
+% Inputs
+%   upscale - The times of spline-upscaling applied to the coordinates
+%       The default value is 0 (no upscaling)
+%   buf - The size of the buffer from the coastline in degrees
+%       The value can be positive (buffering outwards) or negative
+%       (buffering inwards)
+%       The default value is 0 (no buffer)
 %
-% res      0 The standard, default values
-%          N Splined values at N times the resolution
-% buf      Distance in degrees that the region outline will be enlarged
-%          by BUFFERM, not necessarily integer, possibly negative
-%          [default: 0]
+% Outputs
+%   lonlat - Closed-curved coordinates of the continent
+%       The coordinates are in the form of [longitude(:), latitude(:)] in 
+%       degrees
 %
-% OUTPUT:
-%
-% XY       Closed-curved coordinates of the continent
-%
-% Last modified by charig-at-princeton.edu, 11/23/2011
-% Last modified by fjsimons-at-alum.mit.edu, 11/23/2011
+% Last modified by
+%   williameclee-at-arizona.edu, 07/30/2024
+%   fjsimons-at-alum.mit.edu, 11/23/2011
+%   charig-at-princeton.edu, 11/23/2011
 
-defval('res',0)
-defval('buf',0)
+function lonlat = australia(varargin)
+    % Parse inputs
+    [upscale, buf] = parsedomaininputs(varargin);
+    % Parameters that make this the region in question
+    domainName = 'australia';
+    c11 = [112, -10.5];
+    cmn = [154, -39];
+    xunt = 2:166;
 
-% Parameters that make this the region in question
-regn='australia';
-c11=[112 -10.5];
-cmn=[154 -39  ];
-xunt=2:166;
+    % Find/load/save the coordinates
+    lonlat = regselect(domainName, c11, cmn, xunt, upscale, buf);
 
-% Do it! Make it, load it, save it
-XY=regselect(regn,c11,cmn,xunt,res,buf);
+    % Plot the result if no output is requested
+    if nargout > 0
+        return
+    end
 
-if nargout==0
-  plot(XY(:,1),XY(:,2),'k-'); axis image; grid on
+    figure(10)
+    % Specify a figure number so there won't be a new figure each time
+    set(gcf, 'Name', ...
+        sprintf('Coordinates of Australia (%s)', upper(mfilename)))
+    plot(lonlat(:, 1), lonlat(:, 2), 'k-')
+    axis image
+    grid on
 end
-
-% Prepare optional output
-varns={XY};
-varargout=varns(1:nargout);

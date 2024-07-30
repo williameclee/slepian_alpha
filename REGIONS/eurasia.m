@@ -1,43 +1,55 @@
-% XY=EURASIA(res,buf)
-% EURASIA(...) % Only makes a plot
+%% EURASIA
+% Returns the longitude-latitude coordinates of the Eurasia continent,
+% potentially buffered by some amount.
+% Note that the longitude is offset by 360 degrees and more to make the 
+% curve continuous.
 %
-% Finds the coordinates of Eurasia, potentially buffered by some amount.
+% Syntax
+%   lonlat = eurasia(upscale, buf)
+%   eurasia(__)
 %
-% INPUT:
+% Inputs
+%   upscale - The times of spline-upscaling applied to the coordinates
+%       The default value is 0 (no upscaling)
+%   buf - The size of the buffer from the coastline in degrees
+%       The value can be positive (buffering outwards) or negative
+%       (buffering inwards)
+%       The default value is 0 (no buffer)
 %
-% res      0 The standard, default values
-%          N Splined values at N times the resolution
-% buf      Distance in degrees that the region outline will be enlarged
-%          by BUFFERM, not necessarily integer, possibly negative
-%          [default: 0]
+% Outputs
+%   lonlat - Closed-curved coordinates of the continent
+%       The coordinates are in the form of [longitude(:), latitude(:)] in 
+%       degrees
 %
-% OUTPUT:
-%
-% XY       Closed-curved coordinates of the continent
-%
-% Last modified by charig-at-princeton.edu, 11/23/2011
-% Last modified by fjsimons-at-alum.mit.edu, 11/23/2011
+% Last modified by
+%   williameclee-at-arizona.edu, 07/30/2024
+%   fjsimons-at-alum.mit.edu, 11/23/2011
+%   charig-at-princeton.edu, 11/23/2011
 
-function varargout = eurasia(res, buf)
-    defval('res', 0)
-    defval('buf', 0)
-
+function lonlat = eurasia(varargin)
+    % Parse inputs
+    [upscale, buf] = parsedomaininputs(varargin);
     % Parameters that make this the region in question
-    regn = 'eurasia';
-    c11 = [0 77.5; 350 50];
-    cmn = [180 8; 360 36];
-    xunt = [420:827 914:1023 1556:1605 1030:1548];
-    ofs = [360 0 360];
+    domainName = 'eurasia';
+    c11 = [0, 77.5; 350, 50];
+    cmn = [180, 8; 360, 36];
+    xunt = [420:827, 914:1023, 1556:1605, 1030:1548];
+    ofs = [360, 0, 360];
 
-    % Do it! Make it, load it, save it
-    XY = regselect(regn, c11, cmn, xunt, res, buf, ofs);
-    XY = closecoastline(XY);
+    % Find/load/save the coordinates
+    lonlat = regselect(domainName, c11, cmn, xunt, upscale, buf, ofs);
+    lonlat = closecoastline(lonlat);
 
-    if nargout == 0
-        plot(XY(:, 1), XY(:, 2), 'k-'); axis equal; grid on
+    % Plot the result if no output is requested
+    if nargout > 0
+        return
     end
 
-    % Prepare optional output
-    varns = {XY};
-    varargout = varns(1:nargout);
+    figure(10)
+    % Specify a figure number so there won't be a new figure each time
+    set(gcf, 'Name', ...
+        sprintf('Coordinates of Africa (%s)', upper(mfilename)))
+    plot(lonlat(:, 1), lonlat(:, 2), 'k-')
+    axis image
+    grid on
 end
